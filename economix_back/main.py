@@ -161,7 +161,7 @@ class PDFFileProcessing:
 
         shutil.copy(f"{self.excel_path}", f"{UPLOAD_FOLDER}/{self.uuid}_ready")
 
-        shutil.make_archive(str(self.uuid), 'zip', f'{UPLOAD_FOLDER}/{self.uuid}_ready')
+        shutil.make_archive(f'{UPLOAD_FOLDER}/{self.uuid}', 'zip', f'{UPLOAD_FOLDER}/{self.uuid}_ready')
 
     def get_file_progress(self, files_count, current_file, file_name):
         self.progress = round((current_file * 100) / (files_count-1), 2)
@@ -238,7 +238,7 @@ def get_user_files(session_uuid):
 
 @app.route('/download/<session_uuid>', methods=['GET'])
 def download_file(session_uuid):
-    return send_file(f'{str(session_uuid)}.zip')
+    return send_file(f'{UPLOAD_FOLDER}/{str(session_uuid)}.zip')
 
 
 if __name__ == "__main__":
