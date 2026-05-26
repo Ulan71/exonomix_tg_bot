@@ -1,0 +1,368 @@
+<!-- templates/result.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обработка документов</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1b1b1b 100%);
+            color: #ffffff;
+        }
+
+        .wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 42px;
+            font-weight: 700;
+            color: #ffd400;
+        }
+
+        .header p {
+            margin-top: 8px;
+            color: #aaaaaa;
+            font-size: 16px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        .panel {
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #ffd400;
+            font-size: 24px;
+        }
+
+        /* ---------- Список файлов ---------- */
+
+        .file-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .file-list li {
+            background: #242424;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            color: #e0e0e0;
+            transition: all 0.3s ease;
+            word-break: break-word;
+        }
+
+        .file-list li:hover {
+            border-color: #ffd400;
+            background: #2c2c2c;
+        }
+
+        /* Подсветка текущего файла */
+        .file-list li.active-file {
+            background: linear-gradient(
+                90deg,
+                rgba(255, 212, 0, 0.20),
+                rgba(255, 212, 0, 0.06)
+            );
+            border-color: #ffd400;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(255, 212, 0, 0.15);
+        }
+
+        /* ---------- Прогресс ---------- */
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .progress-percent {
+            color: #ffd400;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 32px;
+            background: #2a2a2a;
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid #3a3a3a;
+            margin-bottom: 30px;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ffd400, #ffb800);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        /* ---------- Информационные карточки ---------- */
+
+        .info-card {
+            background: #242424;
+            border: 1px solid #333333;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #9e9e9e;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+            word-break: break-word;
+        }
+
+        /* ---------- Статус ---------- */
+
+        .status {
+            margin-top: 20px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            background: rgba(255, 212, 0, 0.08);
+            border: 1px solid rgba(255, 212, 0, 0.25);
+            color: #ffd400;
+            font-weight: 600;
+        }
+
+        .status.completed {
+            background: rgba(76, 175, 80, 0.10);
+            border-color: rgba(76, 175, 80, 0.35);
+            color: #7CFC90;
+        }
+
+        .session-id {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777777;
+            word-break: break-all;
+        }
+
+        /* ---------- Скролл ---------- */
+
+        .file-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .file-list::-webkit-scrollbar-track {
+            background: #1f1f1f;
+            border-radius: 10px;
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: #ffd400;
+            border-radius: 10px;
+        }
+
+        /* ---------- Адаптивность ---------- */
+
+        @media (max-width: 900px) {
+            body {
+                padding: 15px;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 30px;
+            }
+
+            .info-value {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="header">
+        <h1>Обработка документов</h1>
+        <p>Система анализирует PDF-файлы и формирует итоговые результаты.</p>
+    </div>
+
+    <div class="layout">
+        <!-- Левая панель -->
+        <div class="panel">
+            <h2>Список файлов</h2>
+            <ul class="file-list" id="file-list">
+                <li>Загрузка списка файлов...</li>
+            </ul>
+        </div>
+
+        <!-- Правая панель -->
+        <div class="panel">
+            <h2>Прогресс обработки</h2>
+
+            <div class="progress-header">
+                <span>Общий прогресс</span>
+                <span class="progress-percent" id="progress-text">0%</span>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-label">Текущий файл</div>
+                <div class="info-value" id="current-file">Подготовка...</div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-label">Дополнительная информация</div>
+                <div class="info-value" id="extra-info">
+                    Анализ структуры документа и извлечение данных...
+                </div>
+            </div>
+
+            <div class="status" id="status">
+                Выполняется обработка...
+            </div>
+
+            <div class="session-id">
+                Session ID: {{ session_uuid }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const sessionUuid = "{{ session_uuid }}";
+
+    // Загрузка списка файлов
+    async function loadFiles() {
+        try {
+            const response = await fetch(`/files/${sessionUuid}`);
+            const data = await response.json();
+
+            const fileList = document.getElementById("file-list");
+            fileList.innerHTML = "";
+
+            data.files.forEach(file => {
+                const li = document.createElement("li");
+                li.textContent = file;
+                li.dataset.filename = file;   // сохраняем имя файла
+                fileList.appendChild(li);
+            });
+        } catch (error) {
+            console.error("Ошибка загрузки списка файлов:", error);
+        }
+    }
+
+    // Подсветка текущего файла
+    function highlightCurrentFile(currentFilename) {
+        const items = document.querySelectorAll("#file-list li");
+
+        items.forEach(item => {
+            item.classList.remove("active-file");
+
+            if (item.dataset.filename === currentFilename) {
+                item.classList.add("active-file");
+
+                // Прокручиваем список к активному элементу
+                item.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest"
+                });
+            }
+        });
+    }
+
+    // Обновление прогресса
+    async function updateProgress() {
+        try {
+            const response = await fetch(`/process/${sessionUuid}`);
+            const data = await response.json();
+
+            const progress = data.progress || 0;
+            const currentFile = data.current_file || "Подготовка...";
+
+            // Обновляем прогресс
+            document.getElementById("progress-fill").style.width = progress + "%";
+            document.getElementById("progress-text").textContent = progress + "%";
+
+            // Обновляем текущий файл
+            document.getElementById("current-file").textContent = currentFile;
+
+            // Подсвечиваем файл в списке
+            highlightCurrentFile(currentFile);
+
+            // Обновляем статус
+            const status = document.getElementById("status");
+
+            if (progress >= 100) {
+                setTimeout(() => {
+        window.location.href = `/download/${sessionUuid}`;
+    }, 10000);
+                status.textContent = "Обработка завершена. Все файлы успешно обработаны.";
+                status.classList.add("completed");
+                clearInterval(progressInterval);
+            } else {
+                status.textContent = "Выполняется обработка...";
+            }
+        } catch (error) {
+            console.error("Ошибка получения прогресса:", error);
+        }
+    }
+
+    // Инициализация
+    loadFiles().then(() => {
+        updateProgress();
+        window.progressInterval = setInterval(updateProgress, 1000);
+    });
+</script>
+</body>
+</html>

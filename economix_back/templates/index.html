@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>ECONOMIX Upload</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0d0d0d;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        .box {
+            width: 450px;
+            background: #151515;
+            border: 1px solid #2a2a2a;
+            border-radius: 18px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        h1 {
+            color: #ffd400;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .drop-area {
+            margin-top: 20px;
+            border: 2px dashed #333;
+            border-radius: 16px;
+            padding: 50px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .drop-area.hover {
+            border-color: #ffd400;
+            background: rgba(255, 212, 0, 0.08);
+            transform: scale(1.02);
+        }
+
+        .drop-text {
+            color: #bbb;
+            font-size: 14px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #777;
+        }
+
+        .btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #ffd400, #ffb800);
+            font-weight: bold;
+            cursor: pointer;
+            color: #111;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+    <h1>ECONOMIX</h1>
+    <p>Перетащи файлы или нажми для выбора</p>
+
+    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+
+        <input id="fileInput" class="file-input" type="file" name="files" multiple>
+
+        <div class="drop-area" id="dropArea">
+            <div class="drop-text">
+                📂 Перетащи файлы сюда<br>
+                или кликни для выбора
+            </div>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <button class="btn" type="submit">Загрузить</button>
+    </form>
+</div>
+
+<script>
+    const dropArea = document.getElementById("dropArea");
+    const fileInput = document.getElementById("fileInput");
+    const form = document.getElementById("uploadForm");
+    const status = document.getElementById("status");
+
+    // клик → выбор файлов
+    dropArea.addEventListener("click", () => fileInput.click());
+
+    // drag over
+    dropArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropArea.classList.add("hover");
+    });
+
+    // drag leave
+    dropArea.addEventListener("dragleave", () => {
+        dropArea.classList.remove("hover");
+    });
+
+    // drop
+    dropArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropArea.classList.remove("hover");
+
+        fileInput.files = e.dataTransfer.files;
+
+        autoSubmit();
+    });
+
+    // выбор файлов через input
+    fileInput.addEventListener("change", () => {
+        autoSubmit();
+    });
+
+    // авто отправка
+    function autoSubmit() {
+        if (fileInput.files.length === 0) return;
+
+        status.textContent = "Файлы загружены. Запуск обработки...";
+
+        // маленькая задержка чтобы UI обновился
+        setTimeout(() => {
+            form.submit();
+        }, 300);
+    }
+</script>
+
+</body>
+</html>
