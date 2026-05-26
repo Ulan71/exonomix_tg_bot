@@ -32,8 +32,8 @@ class PDFFileProcessing:
         self.current_file_name = ''
 
     def files_processing(self):
-        os.mkdir(f"{UPLOAD_FOLDER}/{self.uuid}_ready")
-        os.mkdir(f"{UPLOAD_FOLDER}/{self.uuid}_ready/PDFs")
+        os.makedirs(f"{UPLOAD_FOLDER}/{self.uuid}_ready", exist_ok=True)
+        os.makedirs(f"{UPLOAD_FOLDER}/{self.uuid}_ready/PDFs", exist_ok=True)
         files_list = [
             filename
             for filename in os.listdir(self.path)
@@ -188,7 +188,7 @@ def upload_file():
     files = request.files.getlist("files")
     print(files)
 
-    os.mkdir(f"{UPLOAD_FOLDER}/{session_uuid}")
+    os.makedirs(f"{UPLOAD_FOLDER}/{session_uuid}", exist_ok=True)
 
     for file in files:
         filename = file.filename
