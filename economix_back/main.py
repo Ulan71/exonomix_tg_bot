@@ -85,7 +85,7 @@ class PDFFileProcessing:
                     ws.append(row)
 
                 wb.save(f"{self.path}/sheet.xlsx")  # Save all changes
-                print(self.path, "<===============")
+                # print(self.path, "<===============")
 
                 for book in xlsx_files[1:]: os.remove(f"{self.path}/{book}")  # Delete books
 
