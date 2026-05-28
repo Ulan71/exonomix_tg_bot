@@ -346,7 +346,7 @@
             if (progress >= 100) {
                 setTimeout(() => {
         window.location.href = `/download/${sessionUuid}`;
-    }, 10000);
+    }, 1000);
                 status.textContent = "Обработка завершена. Все файлы успешно обработаны.";
                 status.classList.add("completed");
                 clearInterval(progressInterval);

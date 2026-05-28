@@ -23,13 +23,75 @@ from werkzeug.serving import run_simple
 
 
 class PDFFileProcessing:
-    def __init__(self, path, excel_path, uuid):
+    def __init__(self, path, uuid):
         self.path = path
-        self.excel_path = excel_path
+        self.excel_path = f"{UPLOAD_FOLDER}/{uuid}/sheet.xlsx"
         self.uuid = uuid
 
         self.progress = 0
         self.current_file_name = ''
+
+    def combine_excel_files(self):
+        try:
+            xlsx_files = []
+
+            for file in os.listdir(self.path):  # Get all files from path
+                name, ext = os.path.splitext(file)  # Split text to get ext
+                if ext == ".xlsx":
+                    xlsx_files.append(file)  # Add only xlsx files
+
+            xlsx_file_row = []  # List for xlsx files rows, we need it for copy values from book
+
+            if not len(xlsx_files) == 1:  # If we have only one file we don't start copy
+                for xlsx_file in xlsx_files[1:]:  # Working with all xlsx files, except the first one
+                    wb = load_workbook(f"{self.path}/{xlsx_file}")  # Just load the book
+                    sheet = wb.active  # Activating current sheet
+
+                    for row in sheet.iter_rows():  # Reading rows
+                        row_data = []  # List for temp values
+
+                        for cell in row:  # Reading each cell
+                            row_data.append(cell.value)  # Add cell value to list
+
+                        xlsx_file_row.append(row_data)  # Add row list form 'row_data' to 'xlsx_file_row'
+
+                none_counter = 0  # Counter of None
+
+                for last_row_value in xlsx_file_row[-1]:  # Get last row
+                    if last_row_value is None:  # If cell from last row equal None
+                        none_counter += 1  # +1 to 'none_counter'
+
+                if none_counter == len(xlsx_file_row[-1]):  # If 'none_counter' equal 'xlsx_file_row[-1]' len
+                    del xlsx_file_row[-1]  # del
+
+                del xlsx_file_row[:2]
+
+                wb = load_workbook(f"{self.path}/{xlsx_files[0]}")  # Load main Excel file
+                ws = wb.active  # Activate book
+
+                none_counter = 0  # None counter
+
+                for last_row_value in ws.iter_rows(min_row=int(ws.max_row),
+                                                   max_row=int(ws.max_row)):  # Get the last row values
+                    for cell in last_row_value:  # Get each cell value
+                        if cell.value is None:  # If we have None, +1 to 'none_counter'
+                            none_counter += 1
+
+                if none_counter == len(
+                        last_row_value):  # If 'none_counter' and 'last_row_vlaue' len equal, del the last row
+                    ws.delete_rows(int(ws.max_row))
+
+                for row in xlsx_file_row:  # Adding data from books
+                    ws.append(row)
+
+                wb.save(f"{self.path}/sheet.xlsx")  # Save all changes
+                print(self.path, "<===============")
+
+                for book in xlsx_files[1:]: os.remove(f"{self.path}/{book}")  # Delete books
+
+            return True
+        except Exception as e:
+            return False, str(e)
 
     def files_processing(self):
         os.makedirs(f"{UPLOAD_FOLDER}/{self.uuid}_ready", exist_ok=True)
@@ -91,7 +153,7 @@ class PDFFileProcessing:
                                 fpn = page_num
                                 # print("FOUND", page_num, c, file)
 
-        #  <=================================================================================>
+                #  <=================================================================================>
 
                 file_length = len(pdf.pages)  # количество страниц в файле
 
@@ -132,8 +194,8 @@ class PDFFileProcessing:
             for num, esf_cell in enumerate(sheet["G"]):
                 if pdf_esf in str(esf_cell.value):
                     if not len(gdfs) == 0:
-                        sheet[f"H{num+1}"] = gdfs[0]  # Insert data to Excel sheet
-                        print(gdfs)
+                        sheet[f"H{num + 1}"] = gdfs[0]  # Insert data to Excel sheet
+                        # print(gdfs)
 
                     if len(gdfs) == 0:
                         fgdfs = "None"
@@ -145,15 +207,15 @@ class PDFFileProcessing:
                             fgdfs = fgdfs.replace(symbol, " ")
 
                     fgdfs = fgdfs[:80]
-                    print(fgdfs)
+                    # print(fgdfs)
 
-                    sheet.cell(row=num+1, column=7).hyperlink = f"PDFs/{file_num + 1} {fgdfs}.pdf"
-                    sheet.cell(row=num+1, column=7).style = "Hyperlink"
+                    sheet.cell(row=num + 1, column=7).hyperlink = f"PDFs/{file_num + 1} {fgdfs}.pdf"
+                    sheet.cell(row=num + 1, column=7).style = "Hyperlink"
 
-                    print("found")
-                    print(file)
-                    shutil.copy(f"{UPLOAD_FOLDER}/{self.uuid}/{file}", f"{UPLOAD_FOLDER}/{self.uuid}_ready/PDFs/{file_num + 1} {fgdfs}.pdf")
-
+                    # print("found")
+                    # print(file)
+                    shutil.copy(f"{UPLOAD_FOLDER}/{self.uuid}/{file}",
+                                f"{UPLOAD_FOLDER}/{self.uuid}_ready/PDFs/{file_num + 1} {fgdfs}.pdf")
 
                     self.get_file_progress(len(files_list), file_num, file)
 
@@ -163,8 +225,15 @@ class PDFFileProcessing:
 
         # shutil.make_archive(f'{UPLOAD_FOLDER}/{self.uuid}', 'zip', f'{UPLOAD_FOLDER}/{self.uuid}_ready')
 
+    def start_processing(self):
+        combine = self.combine_excel_files()
+        print(combine)
+
+        if combine:
+            self.files_processing()
+
     def get_file_progress(self, files_count, current_file, file_name):
-        self.progress = round((current_file * 100) / (files_count-1), 2)
+        self.progress = round((current_file * 100) / (files_count - 1), 2)
         self.current_file_name = file_name
 
 
@@ -197,9 +266,8 @@ def upload_file():
 
     global tasks
 
-    tasks[session_uuid] = PDFFileProcessing(f"uploads/{session_uuid}", f"uploads/{session_uuid}/sheet.xlsx",
-                                            session_uuid)
-    thread = threading.Thread(target=tasks[session_uuid].files_processing)
+    tasks[session_uuid] = PDFFileProcessing(f"{UPLOAD_FOLDER}/{session_uuid}", session_uuid)
+    thread = threading.Thread(target=tasks[session_uuid].start_processing)
     thread.start()
 
     return redirect(f"/result/{session_uuid}")
@@ -216,7 +284,7 @@ def get_process(session_uuid):
     return jsonify({
         "progress": tasks[session_uuid].progress,
         "current_file": tasks[session_uuid].current_file_name
-                    })
+    })
 
 
 @app.route('/files/<session_uuid>', methods=['GET'])
@@ -238,7 +306,8 @@ def get_user_files(session_uuid):
 
 @app.route('/download/<session_uuid>', methods=['GET'])
 def download_file(session_uuid):
-    ready_archive = shutil.make_archive(f'{UPLOAD_FOLDER}/{session_uuid}', 'zip', f'{UPLOAD_FOLDER}/{session_uuid}_ready')
+    ready_archive = shutil.make_archive(f'{UPLOAD_FOLDER}/{session_uuid}', 'zip',
+                                        f'{UPLOAD_FOLDER}/{session_uuid}_ready')
     return send_file(ready_archive, as_attachment=True)
 
 
